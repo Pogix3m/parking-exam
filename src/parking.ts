@@ -8,12 +8,17 @@ export type TParkingSlotDetail = {
     time: number;
 };
 
+type TParkingPastEntry = TParkingSlotDetail & { rate: TRate; endTime: number };
+
 export class Parking {
     private readonly availableSlots: Slot[] = [];
     private readonly entryPoints: number;
     private readonly minEntryPoints: number = 3;
     private readonly parkedVehicles: Map<Vehicle["Id"], TParkingSlotDetail> = new Map();
+    private readonly pastEntries: Map<Vehicle["Id"], TParkingPastEntry> = new Map();
     private time: number = 0;
+
+    // currently unused
     private readonly usedSlots: Map<Slot["Id"], TParkingSlotDetail> = new Map();
 
     public get AvailableSlots(): Slot[] {
@@ -56,11 +61,25 @@ export class Parking {
                 1,
             );
 
+            let time: number = this.Time;
+
+            const pastEntry: TParkingPastEntry | undefined = this.pastEntries.get(vehicle.Id);
+            if (pastEntry) {
+                if (this.Time - pastEntry.endTime <= 1) {
+                    // adjust time entry if previously occupied a slot within 1hr
+                    time = pastEntry.time;
+                }
+                else {
+                    // if not, no more use for it
+                    this.pastEntries.delete(vehicle.Id);
+                }
+            }
+
             // add detail to maps
             result = {
                 slot,
                 vehicle,
-                time: this.Time,
+                time,
             };
             this.parkedVehicles.set(vehicle.Id, result);
             this.usedSlots.set(slot.Id, result);
@@ -80,6 +99,7 @@ export class Parking {
         }
         else {
             this.time += additionalHours;
+            console.log(`Current Time: ${ this.Time }`);
         }
 
         return this.Time;
@@ -120,7 +140,8 @@ export class Parking {
 
         result = this.OccupyAvailableSlot(entryPoint, vehicle);
         if (result) {
-            console.log(`Vehicle(${ result.vehicle.Id }) occupies slot: ${ result.slot.Id }`);
+            console.log("\nPARK");
+            console.log(`Vehicle(${ result.vehicle.Id }) occupies Slot(${ result.slot.Id })`);
         }
         else {
             console.log("No available parking slot");
@@ -138,26 +159,38 @@ export class Parking {
         let charge: number = 0;
         const detail: TParkingSlotDetail | undefined = this.parkedVehicles.get(vehicleId);
         if (detail) {
+            console.log("\nUNPARK");
             // remove parked mapping
             this.parkedVehicles.delete(detail.vehicle.Id);
             this.usedSlots.delete(detail.slot.Id);
 
             // add to available slots
             this.availableSlots.push(detail.slot);
+            console.log(`Slot(${ detail.slot.Id }) is now available`);
 
             const rate: TRate = Rate.Calculate({
                 startTime: detail.time,
                 endTime: this.Time,
                 slotSize: detail.slot.Size,
             });
+            // this assumes that previous rate was already paid
+            // therefore, it should not pay the whole new rate
+            const previousCharge: number = this.pastEntries.get(detail.vehicle.Id)?.rate.charge ?? 0;
+            this.pastEntries.set(
+                detail.vehicle.Id,
+                {
+                    ...detail,
+                    rate,
+                    endTime: this.Time,
+                },
+            );
 
-            charge = rate.charge;
-            console.log(`Charge of Php${charge} for total of ${rate.totalHours} hours`);
+            charge = rate.charge - previousCharge;
+            console.log(`Vehicle(${ detail.vehicle.Id }) charge of Php${charge} for total of ${rate.totalHours} hours`);
         }
         else {
-            console.log("Vehicle not found");
+            console.log(`Vehicle(${ vehicleId }) not found`);
         }
-
 
         return charge;
     }
