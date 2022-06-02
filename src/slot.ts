@@ -49,7 +49,7 @@ export class Slot {
             default: throw new Error("Invalid slot size");
         }
 
-        if (this.Distances.some((distance: number) => !distance)) {
+        if (this.Distances.some((distance: number) => distance <= 0)) {
             throw new Error("Distance must be greater than 0");
         }
     }
