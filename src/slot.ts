@@ -1,5 +1,6 @@
 
 type TSlotCtor = {
+    /** index is mapped to entryPoints. so items must be equal to the number of entry points */
     distances: number[];
     id: string;
     size: ESlotSize;
