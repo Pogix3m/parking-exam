@@ -1,10 +1,11 @@
 import { Slot } from "./slot";
 import { Vehicle } from "./vehicle";
+import { Rate, TRate } from "./rate";
 
 export type TParkingSlotDetail = {
     slot: Slot;
     vehicle: Vehicle;
-    // time: number;
+    time: number;
 };
 
 export class Parking {
@@ -59,7 +60,7 @@ export class Parking {
             result = {
                 slot,
                 vehicle,
-                // time: this.Time,
+                time: this.Time,
             };
             this.parkedVehicles.set(vehicle.Id, result);
             this.usedSlots.set(slot.Id, result);
@@ -131,9 +132,10 @@ export class Parking {
     /**
      * Free a slot for parked vehicles
      * @param vehicleId
-     * @return Vehicle and Parking slot details
+     * @return Charge amount
      */
-    public Unpark(vehicleId: string): TParkingSlotDetail | undefined {
+    public Unpark(vehicleId: string): number {
+        let charge: number = 0;
         const detail: TParkingSlotDetail | undefined = this.parkedVehicles.get(vehicleId);
         if (detail) {
             // remove parked mapping
@@ -142,12 +144,21 @@ export class Parking {
 
             // add to available slots
             this.availableSlots.push(detail.slot);
+
+            const rate: TRate = Rate.Calculate({
+                startTime: detail.time,
+                endTime: this.Time,
+                slotSize: detail.slot.Size,
+            });
+
+            charge = rate.charge;
+            console.log(`Charge of Php${charge} for total of ${rate.totalHours} hours`);
         }
         else {
             console.log("Vehicle not found");
         }
 
 
-        return detail;
+        return charge;
     }
 }

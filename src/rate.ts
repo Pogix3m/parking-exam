@@ -15,7 +15,7 @@ export type TRateCompute = {
     slotSize: ESlotSize;
 };
 
-type TRate = {
+export type TRate = {
     /** total number of hours parked */
     totalHours: number;
     /** total number of hours converted to days */

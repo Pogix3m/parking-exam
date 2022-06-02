@@ -60,6 +60,7 @@ describe("Parking Class", () => {
     });
 
     describe("Functions", () => {
+        // ARRANGE
         const parking: Parking = new Parking(3);
         const slot1: Slot = new Slot({
             id: "1",
@@ -76,21 +77,37 @@ describe("Parking Class", () => {
             size: ESlotSize.LP,
             distances: [7, 3, 1],
         });
+        const vehicle1: Vehicle = new Vehicle({
+            id: "1",
+            size: EVehicleSize.M,
+        });
+        const vehicle2: Vehicle = new Vehicle({
+            id: "2",
+            size: EVehicleSize.L,
+        });
+        const vehicle3: Vehicle = new Vehicle({
+            id: "3",
+            size: EVehicleSize.L,
+        });
+        const vehicle4: Vehicle = new Vehicle({
+            id: "4",
+            size: EVehicleSize.S,
+        });
+        parking.Init([slot3, slot2, slot1]);
 
-        it("Park", () => {
-            // ARRANGE
-            const vehicle1: Vehicle = new Vehicle({
-                id: "1",
-                size: EVehicleSize.M,
-            });
+        it("Park: Vehicle1", () => {
             // ACT
-            parking.Init([slot3, slot2, slot1]);
             const parkedVehicle1: TParkingSlotDetail | undefined = parking.Park(2, vehicle1);
+
             // ASSERT
             assert.ok(parkedVehicle1, "Should have occupied a slot");
-            assert.equal(
-                parkedVehicle1.slot,
-                slot2,
+            assert.deepStrictEqual<TParkingSlotDetail>(
+                parkedVehicle1,
+                {
+                    slot: slot2,
+                    vehicle: vehicle1,
+                    time: 0,
+                },
                 "Even though same distance with slot 3, smaller slot size will be the priority",
             );
             assert.equal(parking.AvailableSlots.length, 2);
@@ -102,19 +119,21 @@ describe("Parking Class", () => {
                 parking.AvailableSlots.some((slot: Slot) => slot.Id === slot3.Id),
                 "Slot 3 should still be available",
             );
+        });
 
-            // ARRANGE
-            const vehicle2: Vehicle = new Vehicle({
-                id: "2",
-                size: EVehicleSize.L,
-            });
+        it("Park: Vehicle2", () => {
             // ACT
             const parkedVehicle2: TParkingSlotDetail | undefined = parking.Park(1, vehicle2);
+
             // ASSERT
             assert.ok(parkedVehicle2, "Should have occupied a slot");
-            assert.equal(
-                parkedVehicle2.slot,
-                slot3,
+            assert.deepStrictEqual<TParkingSlotDetail>(
+                parkedVehicle2,
+                {
+                    slot: slot3,
+                    vehicle: vehicle2,
+                    time: 0,
+                },
                 "Even though same distance with slot 1, will occupy base on size",
             );
             assert.equal(parking.AvailableSlots.length, 1);
@@ -122,32 +141,91 @@ describe("Parking Class", () => {
                 parking.AvailableSlots.some((slot: Slot) => slot.Id === slot1.Id),
                 "Slot 1 should still be available",
             );
+        });
 
-            // ARRANGE
-            const vehicle3: Vehicle = new Vehicle({
-                id: "3",
-                size: EVehicleSize.L,
-            });
+        it("Park: Vehicle3", () => {
             // ACT
             const parkedVehicle3: TParkingSlotDetail | undefined = parking.Park(1, vehicle3);
+
             //ASSERT
             assert.equal(parkedVehicle3, undefined, "No more slot for Large");
+        });
 
-            // ARRANGE
-            const vehicle4: Vehicle = new Vehicle({
-                id: "4",
-                size: EVehicleSize.S,
-            });
+        it("Park: Vehicle4", () => {
             // ACT
             const parkedVehicle4: TParkingSlotDetail | undefined = parking.Park(0, vehicle4);
+
             //ASSERT
             assert.ok(parkedVehicle4, "Should have occupied a slot");
-            assert.equal(
-                parkedVehicle4.slot,
-                slot1,
+            assert.deepStrictEqual<TParkingSlotDetail>(
+                parkedVehicle4,
+                {
+                    slot: slot1,
+                    vehicle: vehicle4,
+                    time: 0,
+                },
                 "Occupy the remaining slot",
             );
             assert.equal(parking.AvailableSlots.length, 0);
+        });
+
+        it("Bypass Time", () => {
+            // ACT
+            parking.BypassTime(1);
+            parking.BypassTime(1);
+
+            // ASSERT
+            assert.equal(parking.Time , 2);
+        });
+
+        it("Unpark: Not existing vehicle", () => {
+            // ACT
+            const charge: number = parking.Unpark("404");
+
+            // ASSERT
+            assert.equal(charge, 0, "No charge");
+            assert.equal(parking.AvailableSlots.length, 0);
+        });
+
+        it("Unpark: Vehicle1", () => {
+            // ACT
+            const charge: number = parking.Unpark(vehicle1.Id);
+
+            // ASSERT
+            assert.equal(charge, 40, "Flat Rate");
+            assert.equal(parking.AvailableSlots.length, 1);
+            assert.ok(
+                parking.AvailableSlots.some((slot: Slot) => slot.Id === slot2.Id),
+                "Slot should now be available",
+            );
+        });
+
+        it("Unpark: Vehicle4", () => {
+            // ACT
+            parking.BypassTime(17);
+            const charge: number = parking.Unpark(vehicle4.Id);
+
+            // ASSERT
+            assert.equal(charge, 360, "Flat Rate + Exceeding");
+            assert.equal(parking.AvailableSlots.length, 2);
+            assert.ok(
+                parking.AvailableSlots.some((slot: Slot) => slot.Id === slot1.Id),
+                "Slot should now be available",
+            );
+        });
+
+        it("Unpark: Vehicle2", () => {
+            // ACT
+            parking.BypassTime(33);
+            const charge: number = parking.Unpark(vehicle2.Id);
+
+            // ASSERT
+            assert.equal(charge, 10_400, "2 Days Rate + Exceeding");
+            assert.equal(parking.AvailableSlots.length, 3);
+            assert.ok(
+                parking.AvailableSlots.some((slot: Slot) => slot.Id === slot3.Id),
+                "Slot should now be available",
+            );
         });
     });
 });
