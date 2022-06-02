@@ -16,8 +16,7 @@
         "compile": "tsc",
         "lint": "eslint . --ext .ts",
         "lint-fix": "eslint . --ext .ts --fix",
-        "dev": "ts-node-dev --no-notify index",
-        "start": "node index",
+        "start": "ts-node-dev --no-notify src",
         "test": "ts-mocha \"test/**/*.ts\" --recursive --exit"
     },
     "license": "ISC",

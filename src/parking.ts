@@ -95,11 +95,11 @@ export class Parking {
      */
     public BypassTime(additionalHours: number): number {
         if (additionalHours <= 0) {
-            console.log("Additional hours must be greater than 0");
+            console.log("\nAdditional hours must be greater than 0");
         }
         else {
             this.time += additionalHours;
-            console.log(`Current Time: ${ this.Time }`);
+            console.log(`\nCurrent Time: ${ this.Time }`);
         }
 
         return this.Time;
@@ -144,7 +144,7 @@ export class Parking {
             console.log(`Vehicle(${ result.vehicle.Id }) occupies Slot(${ result.slot.Id })`);
         }
         else {
-            console.log("No available parking slot");
+            console.log(`\nNo available parking slot for Vehicle(${ vehicle.Id })`);
         }
 
         return result;
@@ -156,10 +156,10 @@ export class Parking {
      * @return Charge amount
      */
     public Unpark(vehicleId: string): number {
+        console.log("\nUNPARK");
         let charge: number = 0;
         const detail: TParkingSlotDetail | undefined = this.parkedVehicles.get(vehicleId);
         if (detail) {
-            console.log("\nUNPARK");
             // remove parked mapping
             this.parkedVehicles.delete(detail.vehicle.Id);
             this.usedSlots.delete(detail.slot.Id);
