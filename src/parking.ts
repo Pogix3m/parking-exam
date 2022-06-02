@@ -1,7 +1,7 @@
 import { Slot } from "./slot";
 import { Vehicle } from "./vehicle";
 
-type TParkingSlotDetail = {
+export type TParkingSlotDetail = {
     slot: Slot;
     vehicle: Vehicle;
     // time: number;
@@ -10,23 +10,29 @@ type TParkingSlotDetail = {
 export class Parking {
     private readonly availableSlots: Slot[] = [];
     private readonly entryPoints: number;
+    private readonly minEntryPoints: number = 3;
     private readonly parkedVehicles: Map<Vehicle["Id"], TParkingSlotDetail> = new Map();
     private time: number = 0;
     private readonly usedSlots: Map<Slot["Id"], TParkingSlotDetail> = new Map();
+
+    public get AvailableSlots(): Slot[] {
+        return this.availableSlots;
+    }
 
     public get Time(): number {
         return this.time;
     }
 
     public constructor(entryPoints: number) {
-        if (entryPoints < 3) {
+        if (entryPoints < this.minEntryPoints) {
             throw new Error("Entry points must not be less than 3");
         }
 
         this.entryPoints = entryPoints;
     }
 
-    private GetAvailableSlot(entryPoint: number, vehicle: Vehicle): Slot | undefined {
+    private OccupyAvailableSlot(entryPoint: number, vehicle: Vehicle): TParkingSlotDetail | undefined {
+        let result: TParkingSlotDetail | undefined = undefined;
         const [ slot ] = this.availableSlots
             // filter by size first
             .filter((slot: Slot) => vehicle.Size <= slot.Size)
@@ -36,7 +42,7 @@ export class Parking {
             .sort((a: Slot, b: Slot) => {
                 const result: number = a.Distances[entryPoint] - b.Distances[entryPoint];
                 if (result === 0) {
-                    return a.Size - b.Distances[entryPoint];
+                    return a.Size - b.Size;
                 }
 
                 return result;
@@ -50,16 +56,16 @@ export class Parking {
             );
 
             // add detail to maps
-            const detail: TParkingSlotDetail = {
+            result = {
                 slot,
                 vehicle,
                 // time: this.Time,
             };
-            this.parkedVehicles.set(vehicle.Id, detail);
-            this.usedSlots.set(slot.Id, detail);
+            this.parkedVehicles.set(vehicle.Id, result);
+            this.usedSlots.set(slot.Id, result);
         }
 
-        return slot;
+        return result;
     }
 
     /**
@@ -97,22 +103,29 @@ export class Parking {
      * Parks a vehicle making a slot unavailable
      * @param entryPoint Value is from 0 to EntryPoints - 1
      * @param vehicle Vehicle info to be parked
-     * @return Parking slot occupied
+     * @return Occupied slot details
      */
-    public Park(entryPoint: number, vehicle: Vehicle): Slot | undefined {
+    public Park(entryPoint: number, vehicle: Vehicle): TParkingSlotDetail | undefined {
+        let result: TParkingSlotDetail | undefined = undefined;
+
         if (entryPoint < 0 || entryPoint >= this.entryPoints) {
             throw new Error("Invalid entry point");
         }
+        if (this.parkedVehicles.has(vehicle.Id)) {
+            console.log("A vehicle with this Id is already parked");
 
-        const slot: Slot | undefined = this.GetAvailableSlot(entryPoint, vehicle);
-        if (slot) {
-            console.log(`Vehicle parking slot: ${ slot.Id }`);
+            return result;
+        }
+
+        result = this.OccupyAvailableSlot(entryPoint, vehicle);
+        if (result) {
+            console.log(`Vehicle(${ result.vehicle.Id }) occupies slot: ${ result.slot.Id }`);
         }
         else {
             console.log("No available parking slot");
         }
 
-        return slot;
+        return result;
     }
 
     /**
