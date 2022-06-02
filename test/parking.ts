@@ -77,7 +77,7 @@ describe("Parking Class", () => {
             distances: [7, 3, 1],
         });
 
-        it("Parking", () => {
+        it("Park", () => {
             // ARRANGE
             const vehicle1: Vehicle = new Vehicle({
                 id: "1",
