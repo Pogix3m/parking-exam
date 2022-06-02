@@ -237,5 +237,15 @@ describe("Parking Class", () => {
             // ASSERT
             assert.equal(charge, 5_000, "Continuous Rate: additional 1 day");
         });
+
+        it("Park/Unpark: More than an hour", () => {
+            // ACT
+            parking.Park(0, vehicleS)
+            parking.BypassTime(19);
+            const charge: number = parking.Unpark(vehicleS.Id);
+
+            // ASSERT
+            assert.equal(charge, 1_640, "Normal Rate: Large Size");
+        });
     });
 });

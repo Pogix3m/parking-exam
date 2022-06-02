@@ -59,3 +59,8 @@ parking.Unpark(vehicleL.Id);
 parking.Park(1, vehicleL);
 parking.BypassTime(24);
 parking.Unpark(vehicleL.Id);
+
+// previous vehicle, but more than an hour passed
+parking.Park(0, vehicleS);
+parking.BypassTime(19);
+parking.Unpark(vehicleS.Id);

@@ -30,8 +30,12 @@ export class Parking {
     }
 
     public constructor(entryPoints: number) {
+        // > The mall can decide to add new entrances later.
+        // if this means on runtime, then this is not handled
+        // to handle on runtime, must have function to add distance for a slot
+
         if (entryPoints < this.minEntryPoints) {
-            throw new Error("Entry points must not be less than 3");
+            throw new Error(`Entry points must not be less than ${ this.minEntryPoints }`);
         }
 
         this.entryPoints = entryPoints;
