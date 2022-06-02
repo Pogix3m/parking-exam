@@ -63,6 +63,22 @@ export class Parking {
     }
 
     /**
+     * Bypass time for parked cars
+     * @param additionalHours The amount of time to bypass(in hours)
+     * @return Total time
+     */
+    public BypassTime(additionalHours: number): number {
+        if (additionalHours <= 0) {
+            console.log("Additional hours must be greater than 0");
+        }
+        else {
+            this.time += additionalHours;
+        }
+
+        return this.Time;
+    }
+
+    /**
      * Initialized parking slots
      * @param slots Available slot info
      */
